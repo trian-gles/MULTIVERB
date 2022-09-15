@@ -1,6 +1,6 @@
 #include "revmodel.hpp"
 
-class FREEVERB : public Instrument {
+class MULTIVERB : public Instrument {
    bool     warn_roomsize, warn_predelay, warn_damp, warn_dry, warn_wet,
             warn_width;
    int      branch, insamps;
@@ -12,8 +12,8 @@ class FREEVERB : public Instrument {
 
    void updateRvb(double p[]);
 public:
-   FREEVERB();
-   virtual ~FREEVERB();
+   MULTIVERB();
+   virtual ~MULTIVERB();
    virtual int init(double p[], int n_args);
    virtual int configure();
    virtual int run();

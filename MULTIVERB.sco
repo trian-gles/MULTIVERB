@@ -1,7 +1,7 @@
-/* FREEVERB - a reverberator
+/* MULTIVERB - a multi channel reverberator
 
-   This reverb instrument is based on Freeverb, by Jezar
-   (http://www.dreampoint.co.uk/~jzracc/freeverb.htm).
+   This reverb instrument is based on FREEVERB, by Jezar
+   (http://www.dreampoint.co.uk/~jzracc/MULTIVERB.htm).
 
    p0  = output start time
    p1  = input start time
@@ -31,7 +31,7 @@
    John Gibson <johngibson@virginia.edu>, 2 Feb 2001
 */
 rtsetparams(44100, 2)
-load("FREEVERB")
+load("MULTIVERB")
 
 rtinput("/tmp/clave.aif")
 
@@ -49,6 +49,6 @@ width = 100
 
 setline(0,1, 9,1, 10,0)
 
-FREEVERB(outskip, inskip, dur, amp, roomsize, predelay, ringdur,
+MULTIVERB(outskip, inskip, dur, amp, roomsize, predelay, ringdur,
          damp, dry, wet, width)
 

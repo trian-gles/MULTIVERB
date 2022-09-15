@@ -1,7 +1,7 @@
-/* FREEVERB - a reverberator
+/* MULTIVERB - a reverberator
 
-   This reverb instrument is based on Freeverb, by Jezar
-   (http://www.dreampoint.co.uk/~jzracc/freeverb.htm).
+   This reverb instrument is based on MULTIVERB, by Jezar
+   (http://www.dreampoint.co.uk/~jzracc/MULTIVERB.htm).
 
    p0  = output start time
    p1  = input start time
@@ -40,12 +40,12 @@
 #include <ugens.h>
 #include <math.h>
 #include <Instrument.h>
-#include "FREEVERB.h"
+#include "MULTIVERB.h"
 #include <rt.h>
 #include <rtdefs.h>
 
 
-FREEVERB :: FREEVERB() : Instrument()
+MULTIVERB :: MULTIVERB() : Instrument()
 {
    in = NULL;
    branch = 0;
@@ -58,14 +58,14 @@ FREEVERB :: FREEVERB() : Instrument()
 }
 
 
-FREEVERB :: ~FREEVERB()
+MULTIVERB :: ~MULTIVERB()
 {
    delete [] in;
    delete rvb;
 }
 
 
-int FREEVERB :: init(double p[], int n_args)
+int MULTIVERB :: init(double p[], int n_args)
 {
    float outskip = p[0];
    float inskip = p[1];
@@ -81,25 +81,25 @@ int FREEVERB :: init(double p[], int n_args)
    // Keep reverb comb feedback <= 1.0
    max_roomsize = (1.0 - offsetroom) / scaleroom;
    if (roomsize < 0.0)
-      return die("FREEVERB", "Room size must be between 0 and %g.",
+      return die("MULTIVERB", "Room size must be between 0 and %g.",
                                                                max_roomsize);
    if (roomsize > max_roomsize) {
       roomsize = max_roomsize;
-      rtcmix_advise("FREEVERB", "Room size cannot be greater than %g. Adjusting...",
+      rtcmix_advise("MULTIVERB", "Room size cannot be greater than %g. Adjusting...",
              max_roomsize);
    }
    int predelay_samps = (int) ((predelay_time * SR) + 0.5);
    if (predelay_samps > max_predelay_samps)
-      return die("FREEVERB", "Pre-delay must be between 0 and %g seconds.",
+      return die("MULTIVERB", "Pre-delay must be between 0 and %g seconds.",
                                              (float) max_predelay_samps / SR);
    if (damp < 0.0 || damp > 100.0)
-      return die("FREEVERB", "Damp must be between 0 and 100%%.");
+      return die("MULTIVERB", "Damp must be between 0 and 100%%.");
    if (dry < 0.0 || dry > 100.0)
-      return die("FREEVERB", "Dry signal level must be between 0 and 100%%.");
+      return die("MULTIVERB", "Dry signal level must be between 0 and 100%%.");
    if (wet < 0.0 || wet > 100.0)
-      return die("FREEVERB", "Wet signal level must be between 0 and 100%%.");
+      return die("MULTIVERB", "Wet signal level must be between 0 and 100%%.");
    if (width < 0.0 || width > 100.0)
-      return die("FREEVERB", "Width must be between 0 and 100%%.");
+      return die("MULTIVERB", "Width must be between 0 and 100%%.");
 
    if (rtsetinput(inskip, this) == -1)
       return DONT_SCHEDULE;
@@ -108,9 +108,9 @@ int FREEVERB :: init(double p[], int n_args)
    insamps = (int) (dur * SR);
 
    if (inputChannels() > 2)
-      return die("FREEVERB", "Can't have more than 2 input channels.");
+      return die("MULTIVERB", "Can't have more than 2 input channels.");
    if (outputChannels() > 2)
-      return die("FREEVERB", "Can't have more than 2 output channels.");
+      return die("MULTIVERB", "Can't have more than 2 output channels.");
 
    rvb = new revmodel();
 
@@ -131,20 +131,20 @@ int FREEVERB :: init(double p[], int n_args)
 }
 
 
-int FREEVERB :: configure()
+int MULTIVERB :: configure()
 {
    in = new float [RTBUFSAMPS * inputChannels()];
    return in ? 0 : -1;
 }
 
 
-inline void FREEVERB :: updateRvb(double p[])
+inline void MULTIVERB :: updateRvb(double p[])
 {
    if (p[4] != roomsize) {
       roomsize = p[4];
       if (roomsize < 0.0 || roomsize > max_roomsize) {
          if (warn_roomsize) {
-            rtcmix_warn("FREEVERB", "Room size must be between 0 and %g. Adjusting...",
+            rtcmix_warn("MULTIVERB", "Room size must be between 0 and %g. Adjusting...",
                                                                   max_roomsize);
             warn_roomsize = false;
          }
@@ -157,7 +157,7 @@ inline void FREEVERB :: updateRvb(double p[])
       int predelay_samps = (int) ((predelay_time * SR) + 0.5);
       if (predelay_samps > max_predelay_samps) {
          if (warn_predelay) {
-            rtcmix_warn("FREEVERB", "Pre-delay must be between 0 and %g seconds. "
+            rtcmix_warn("MULTIVERB", "Pre-delay must be between 0 and %g seconds. "
                              "Adjusting...", (float) max_predelay_samps / SR);
             warn_predelay = false;
          }
@@ -169,7 +169,7 @@ inline void FREEVERB :: updateRvb(double p[])
       damp = p[7];
       if (damp < 0.0 || damp > 100.0) {
          if (warn_damp) {
-            rtcmix_warn("FREEVERB", "Damp must be between 0 and 100%%. Adjusting...");
+            rtcmix_warn("MULTIVERB", "Damp must be between 0 and 100%%. Adjusting...");
             warn_damp = false;
          }
          damp = damp < 0.0 ? 0.0 : 100.0;
@@ -180,7 +180,7 @@ inline void FREEVERB :: updateRvb(double p[])
       dry = p[8];
       if (dry < 0.0 || dry > 100.0) {
          if (warn_dry) {
-            rtcmix_warn("FREEVERB", "Dry signal level must be between 0 and 100%%. "
+            rtcmix_warn("MULTIVERB", "Dry signal level must be between 0 and 100%%. "
                                                                "Adjusting...");
             warn_dry = false;
          }
@@ -192,7 +192,7 @@ inline void FREEVERB :: updateRvb(double p[])
       wet = p[9];
       if (wet < 0.0 || wet > 100.0) {
          if (warn_wet) {
-            rtcmix_warn("FREEVERB", "Wet signal level must be between 0 and 100%%. "
+            rtcmix_warn("MULTIVERB", "Wet signal level must be between 0 and 100%%. "
                                                                "Adjusting...");
             warn_wet = false;
          }
@@ -204,7 +204,7 @@ inline void FREEVERB :: updateRvb(double p[])
       width = p[10];
       if (width < 0.0 || width > 100.0) {
          if (warn_width) {
-            rtcmix_warn("FREEVERB", "Width must be between 0 and 100%%. Adjusting...");
+            rtcmix_warn("MULTIVERB", "Width must be between 0 and 100%%. Adjusting...");
             warn_width = false;
          }
          width = width < 0.0 ? 0.0 : 100.0;
@@ -215,7 +215,7 @@ inline void FREEVERB :: updateRvb(double p[])
 }
 
 
-int FREEVERB :: run()
+int MULTIVERB :: run()
 {
    float *inL, *inR, *outL, *outR;
 
@@ -255,7 +255,7 @@ int FREEVERB :: run()
       increment();
    }
 
-   // Hand off to Freeverb to do the actual work.
+   // Hand off to MULTIVERB to do the actual work.
    rvb->processreplace(inL, inR, outL, outR, framesToRun(), inputChannels(),
                                                          outputChannels());
 
@@ -263,12 +263,12 @@ int FREEVERB :: run()
 }
 
 
-Instrument *makeFREEVERB()
+Instrument *makeMULTIVERB()
 {
-   FREEVERB *inst;
+   MULTIVERB *inst;
 
-   inst = new FREEVERB();
-   inst->set_bus_config("FREEVERB");
+   inst = new MULTIVERB();
+   inst->set_bus_config("MULTIVERB");
 
    return inst;
 }
@@ -276,7 +276,7 @@ Instrument *makeFREEVERB()
 #ifndef EMBEDDED
 void rtprofile()
 {
-   RT_INTRO("FREEVERB", makeFREEVERB);
+   RT_INTRO("MULTIVERB", makeMULTIVERB);
 }
 #endif
 
