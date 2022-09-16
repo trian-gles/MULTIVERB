@@ -1,3 +1,0 @@
-RECORD(start,dur,inchan,index)
-PLAY(outskip,inskip,dur,amp,index,channel spread)
-	- this needs to use an envelope

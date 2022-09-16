@@ -1,8 +1,0 @@
-#!/bin/sh
-
-prefix=/usr/local
-pkgname="RTcmix-4.1.2-Intel.pkg"
-
-rm -rf ${prefix}/rtcmix
-rm -rf /Library/Receipts/${pkgname}
-
