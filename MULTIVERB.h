@@ -1,14 +1,14 @@
 #include "revmodel.hpp"
-
+#include <vector>
 class MULTIVERB : public Instrument {
    bool     warn_roomsize, warn_predelay, warn_damp, warn_dry, warn_wet,
             warn_width;
-   int      branch, insamps;
+   int      branch, insamps, channels;
    float    amp, ringdur, roomsize, predelay_time, max_roomsize,
-            damp, dry, wet, width;
+            damp, dry, wet;
    float    *in, amptabs[2];
    double   *amparray;
-   revmodel *rvb;
+   std::vector<revmodel*>* rvb_models;
 
    void updateRvb(double p[]);
 public:
