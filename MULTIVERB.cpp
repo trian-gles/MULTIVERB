@@ -12,28 +12,7 @@
    p6  = ring-down duration
    p7  = damp (0-100%)
    p8  = dry signal level (0-100%)
-   p9  = wet signal level (0-100%)
-   p10 = # channels
-
-   p3 (amplitude), p4 (room size), p5 (pre-delay), p7 (damp), p8 (dry),
-   p9 (wet) and p10 (stereo width) can receive dynamic updates from a table
-   or real-time control source.
-
-   If an old-style gen table 1 is present, its values will be multiplied
-   by the p3 amplitude multiplier, even if the latter is dynamic.
-
-   The amplitude multiplier is applied to the input sound *before*
-   it enters the reverberator.
-
-   If you enter a room size greater than the maximum, you'll get the
-   maximum amount -- which is probably an infinite reverb time.
-
-   Input can be mono or stereo; output can be mono or stereo.
-
-   Be careful with the dry and wet levels -- it's easy to get extreme
-   clipping!
-
-   John Gibson <johngibson@virginia.edu>, 2 Feb 2001; rev for v4, 7/11/04
+   p9  = wet signal level (0-100%)c 
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,7 +20,7 @@
 #include <ugens.h>
 #include <math.h>
 #include <Instrument.h>
-#include "MULTIVERB.h"
+#include "MULTIVERB.hpp"
 #include <rt.h>
 #include <rtdefs.h>
 
@@ -75,6 +54,7 @@ int MULTIVERB :: init(double p[], int n_args)
    float outskip = p[0];
    float inskip = p[1];
    float dur = p[2];
+   amp = p[3];
    roomsize = p[4];
    predelay_time = p[5];
    ringdur = p[6];
@@ -109,6 +89,14 @@ int MULTIVERB :: init(double p[], int n_args)
       return DONT_SCHEDULE;
    insamps = (int) (dur * SR);
 
+   if (inputChannels() < 3)
+      return die("MULTIVERB", "Just use freeverb sillyhead!");
+   if (outputChannels() < 3)
+      return die("MULTIVERB", "Just use freeverb sillyhead!");
+
+   if (inputChannels() != outputChannels())
+      return die("MULTIVERB", "For now, the number of inputs and outputs must be equal");
+
    if (inputChannels() > 16)
       return die("MULTIVERB", "Can't have more than 16 input channels.");
    if (outputChannels() > 16)
@@ -119,7 +107,7 @@ int MULTIVERB :: init(double p[], int n_args)
 
    // these need to be scaled
    for (int i = 0; i < inputChannels(); i++){
-      auto rvb = new revmodel();
+      revmodel* rvb = new revmodel();
       rvb->setroomsize(roomsize + ((float) rand() / (RAND_MAX)) / 10);
       rvb->setpredelay(predelay_samps);
       rvb->setdamp((damp) * 0.01 + ((float) rand() / (RAND_MAX)) / 10);
@@ -129,7 +117,7 @@ int MULTIVERB :: init(double p[], int n_args)
       rvb->setwidth(0);
       rvb_models->push_back(rvb);
    }
-   
+   printf("rmsz=%f, predel=%f, damp=%f, dry=%f, wet=%f\n", roomsize, predelay_time, damp, dry, wet);
 
    amparray = floc(1);
    if (amparray) {
@@ -147,80 +135,82 @@ int MULTIVERB :: configure()
    return in ? 0 : -1;
 }
 
-// THIS ALL NEEDS TO BE REWRITTEN
-inline void MULTIVERB :: updateRvb(double p[])
-{
-   if (p[4] != roomsize) {
-      roomsize = p[4];
-      if (roomsize < 0.0 || roomsize > max_roomsize) {
-         if (warn_roomsize) {
-            rtcmix_warn("MULTIVERB", "Room size must be between 0 and %g. Adjusting...",
-                                                                  max_roomsize);
-            warn_roomsize = false;
-         }
-         roomsize = roomsize < 0.0 ? 0.0 : max_roomsize;
-      }
-      rvb->setroomsize(roomsize);
-   }
-   if (p[5] != predelay_time) {
-      predelay_time = p[5];
-      int predelay_samps = (int) ((predelay_time * SR) + 0.5);
-      if (predelay_samps > max_predelay_samps) {
-         if (warn_predelay) {
-            rtcmix_warn("MULTIVERB", "Pre-delay must be between 0 and %g seconds. "
-                             "Adjusting...", (float) max_predelay_samps / SR);
-            warn_predelay = false;
-         }
-         predelay_samps = max_predelay_samps;
-      }
-      rvb->setpredelay(predelay_samps);
-   }
-   if (p[7] != damp) {
-      damp = p[7];
-      if (damp < 0.0 || damp > 100.0) {
-         if (warn_damp) {
-            rtcmix_warn("MULTIVERB", "Damp must be between 0 and 100%%. Adjusting...");
-            warn_damp = false;
-         }
-         damp = damp < 0.0 ? 0.0 : 100.0;
-      }
-      rvb->setdamp(damp * 0.01);
-   }
-   if (p[8] != dry) {
-      dry = p[8];
-      if (dry < 0.0 || dry > 100.0) {
-         if (warn_dry) {
-            rtcmix_warn("MULTIVERB", "Dry signal level must be between 0 and 100%%. "
-                                                               "Adjusting...");
-            warn_dry = false;
-         }
-         dry = dry < 0.0 ? 0.0 : 100.0;
-      }
-      rvb->setdry(dry * 0.01);
-   }
-   if (p[9] != wet) {
-      wet = p[9];
-      if (wet < 0.0 || wet > 100.0) {
-         if (warn_wet) {
-            rtcmix_warn("MULTIVERB", "Wet signal level must be between 0 and 100%%. "
-                                                               "Adjusting...");
-            warn_wet = false;
-         }
-         wet = wet < 0.0 ? 0.0 : 100.0;
-      }
-      rvb->setwet(wet * 0.01);
-   }
-// printf("rmsz=%f, predel=%f, damp=%f, dry=%f, wet=%f, width=%f\n", roomsize, predelay_time, damp, dry, wet, width);
-}
+// // THIS ALL NEEDS TO BE REWRITTEN
+// inline void MULTIVERB :: updateRvb(double p[])
+// {
+//    if (p[4] != roomsize) {
+//       roomsize = p[4];
+//       if (roomsize < 0.0 || roomsize > max_roomsize) {
+//          if (warn_roomsize) {
+//             rtcmix_warn("MULTIVERB", "Room size must be between 0 and %g. Adjusting...",
+//                                                                   max_roomsize);
+//             warn_roomsize = false;
+//          }
+//          roomsize = roomsize < 0.0 ? 0.0 : max_roomsize;
+//       }
+//       rvb->setroomsize(roomsize);
+//    }
+//    if (p[5] != predelay_time) {
+//       predelay_time = p[5];
+//       int predelay_samps = (int) ((predelay_time * SR) + 0.5);
+//       if (predelay_samps > max_predelay_samps) {
+//          if (warn_predelay) {
+//             rtcmix_warn("MULTIVERB", "Pre-delay must be between 0 and %g seconds. "
+//                              "Adjusting...", (float) max_predelay_samps / SR);
+//             warn_predelay = false;
+//          }
+//          predelay_samps = max_predelay_samps;
+//       }
+//       rvb->setpredelay(predelay_samps);
+//    }
+//    if (p[7] != damp) {
+//       damp = p[7];
+//       if (damp < 0.0 || damp > 100.0) {
+//          if (warn_damp) {
+//             rtcmix_warn("MULTIVERB", "Damp must be between 0 and 100%%. Adjusting...");
+//             warn_damp = false;
+//          }
+//          damp = damp < 0.0 ? 0.0 : 100.0;
+//       }
+//       rvb->setdamp(damp * 0.01);
+//    }
+//    if (p[8] != dry) {
+//       dry = p[8];
+//       if (dry < 0.0 || dry > 100.0) {
+//          if (warn_dry) {
+//             rtcmix_warn("MULTIVERB", "Dry signal level must be between 0 and 100%%. "
+//                                                                "Adjusting...");
+//             warn_dry = false;
+//          }
+//          dry = dry < 0.0 ? 0.0 : 100.0;
+//       }
+//       rvb->setdry(dry * 0.01);
+//    }
+//    if (p[9] != wet) {
+//       wet = p[9];
+//       if (wet < 0.0 || wet > 100.0) {
+//          if (warn_wet) {
+//             rtcmix_warn("MULTIVERB", "Wet signal level must be between 0 and 100%%. "
+//                                                                "Adjusting...");
+//             warn_wet = false;
+//          }
+//          wet = wet < 0.0 ? 0.0 : 100.0;
+//       }
+//       rvb->setwet(wet * 0.01);
+//    }
+// // printf("rmsz=%f, predel=%f, damp=%f, dry=%f, wet=%f, width=%f\n", roomsize, predelay_time, damp, dry, wet, width);
+// }
 
 
 int MULTIVERB :: run()
 {
-
    int samps = framesToRun() * inputChannels();
 
    if (currentFrame() < insamps)
+   {
       rtgetin(in, this, samps);
+   }
+   printf("First samp in buffer before amp = %f\n", in[0]);  
 
    // Scale input signal by amplitude multiplier and setline curve. 
    for (int i = 0; i < samps; i += inputChannels()) {
@@ -232,7 +222,7 @@ int MULTIVERB :: run()
          //   amp = update(3, insamps);
          //   if (amparray)
          //      amp *= tablei(currentFrame(), amparray, amptabs);
-         }
+         //}
          //updateRvb(p);
          branch = getSkip();
       }
@@ -248,10 +238,10 @@ int MULTIVERB :: run()
       }
       increment();
    }
-
+   printf("First samp in buffer = %f\n", in[0]);
    // THIS SHOULD WORK.
    for (int i = 0; i < inputChannels(); i++){
-      rvb->processreplace(in + i, in + i, outBuf + i, outBuf + i, framesToRun(), inputChannels(),
+      (*rvb_models)[i]->processreplace(in + i, in + i, outbuf + i, outbuf + i, framesToRun(), inputChannels(),
                                                          outputChannels());
    }
    

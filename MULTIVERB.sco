@@ -1,54 +1,45 @@
-/* MULTIVERB - a multi channel reverberator
+rtsetparams(44100, 8)
+load("NOISE")
+load("NPAN")
+load("./libMULTIVERB.so")
 
-   This reverb instrument is based on FREEVERB, by Jezar
-   (http://www.dreampoint.co.uk/~jzracc/MULTIVERB.htm).
+bus_config("NOISE", "aux 0 out")
+bus_config("NPAN", "aux 0 in", "aux 1-8 out")
+bus_config("MULTIVERB", "aux 1-8 in", "out 0-7")
 
-   p0  = output start time
-   p1  = input start time
-   p2  = input duration
-   p3  = amplitude multiplier
-   p4  = room size (0-1.07143 ... don't ask)
-   p5  = pre-delay time (time between dry signal and onset of reverb)
-   p6  = ring-down duration
-   p7  = damp (0-100%)
-   p8  = dry signal level (0-100%)
-   p9  = wet signal level (0-100%)
-   p10 = stereo width of reverb (0-100%)
 
-   Assumes function table 1 is amplitude curve for the note. (Try gen 18.)
-   Or you can just call setline. If no setline or function table 1, uses
-   flat amplitude curve.  The curve is applied to the input sound *before*
-   it enters the reverberator.
+sin45 = 0.70710678
 
-   If you enter a room size greater than the maximum, you'll get the
-   maximum amount -- which is probably an infinite reverb time.
+NPANspeakers("polar",
+       45, 1,   // front left
+      -45, 1,   // front right
+       90, 1,   // side left
+      -90, 1,   // side right
+      135, 1,   // rear left
+     -135, 1,   // rear right rear
+        0, 1,   // front center
+      180, 1)   // rear center
 
-   Input can be mono or stereo; output can be mono or stereo.
+dur = 10
+amp = 1000
+freq = 440
 
-   Be careful with the dry and wet levels -- it's easy to get extreme
-   clipping!
+env = maketable("line", 1000, 0,0, 1,1, 49,1, 50,0)
+NOISE(0, dur, amp*env)
 
-   John Gibson <johngibson@virginia.edu>, 2 Feb 2001
-*/
-rtsetparams(44100, 2)
-load("MULTIVERB")
 
-rtinput("/tmp/clave.aif")
+angle = maketable("line", "nonorm", 1000, 0,0, 1,360 * 8)
 
-outskip = 0
-inskip = 0
-dur = DUR()
-amp = .8
+dist = 1
+
+NPAN(0, 0, dur, 1, "polar", angle, dist)
+
 roomsize = 0.9
 predelay = .03
 ringdur = 3
 damp = 70
-dry = 40
-wet = 30
-width = 100
-
-setline(0,1, 9,1, 10,0)
-
-MULTIVERB(outskip, inskip, dur, amp, roomsize, predelay, ringdur,
-         damp, dry, wet, width)
-
+dry = 0
+wet = 100
+   
+   
+MULTIVERB(0, 0, dur, 1, roomsize, predelay, ringdur, damp, dry, wet)

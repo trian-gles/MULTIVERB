@@ -3,7 +3,7 @@
 class MULTIVERB : public Instrument {
    bool     warn_roomsize, warn_predelay, warn_damp, warn_dry, warn_wet,
             warn_width;
-   int      branch, insamps, channels;
+   int      branch, insamps;
    float    amp, ringdur, roomsize, predelay_time, max_roomsize,
             damp, dry, wet;
    float    *in, amptabs[2];
