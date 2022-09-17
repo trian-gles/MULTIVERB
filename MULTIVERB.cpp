@@ -210,7 +210,7 @@ int MULTIVERB :: run()
    {
       rtgetin(in, this, samps);
    }
-   printf("First samp in buffer before amp = %f\n", in[0]);  
+   // printf("First samp in buffer before amp = %f\n", in[0]);  
 
    // Scale input signal by amplitude multiplier and setline curve. 
    for (int i = 0; i < samps; i += inputChannels()) {
@@ -238,7 +238,7 @@ int MULTIVERB :: run()
       }
       increment();
    }
-   printf("First samp in buffer = %f\n", in[0]);
+   // printf("First samp in buffer = %f\n", in[0]);
    // THIS SHOULD WORK.
    for (int i = 0; i < inputChannels(); i++){
       (*rvb_models)[i]->processreplace(in + i, in + i, outbuf + i, outbuf + i, framesToRun(), inputChannels(),
